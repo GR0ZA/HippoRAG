@@ -3,6 +3,7 @@ from .base import EmbeddingConfig, BaseEmbeddingModel
 from .GritLM import GritLMEmbeddingModel
 from .NVEmbedV2 import NVEmbedV2EmbeddingModel
 from .OpenAI import OpenAIEmbeddingModel
+from .Qwen3 import Qwen3EmbeddingModel
 
 from ..utils.logging_utils import get_logger
 
@@ -18,4 +19,6 @@ def _get_embedding_model_class(embedding_model_name: str = "nvidia/NV-Embed-v2")
         return ContrieverModel
     elif "text-embedding" in embedding_model_name:
         return OpenAIEmbeddingModel
+    elif "Qwen/Qwen3-Embedding-0.6B" in embedding_model_name:
+        return Qwen3EmbeddingModel
     assert False, f"Unknown embedding model name: {embedding_model_name}"
