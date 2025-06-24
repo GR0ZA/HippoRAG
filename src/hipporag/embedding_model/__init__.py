@@ -19,6 +19,6 @@ def _get_embedding_model_class(embedding_model_name: str = "nvidia/NV-Embed-v2")
         return ContrieverModel
     elif "text-embedding" in embedding_model_name:
         return OpenAIEmbeddingModel
-    elif "Qwen/Qwen3-Embedding-0.6B" in embedding_model_name:
+    elif "Qwen/Qwen3-Embedding-8B" in embedding_model_name:
         return Qwen3EmbeddingModel
     assert False, f"Unknown embedding model name: {embedding_model_name}"

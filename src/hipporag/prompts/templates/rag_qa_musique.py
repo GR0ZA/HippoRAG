@@ -23,7 +23,7 @@ one_shot_ircot_demo = (
 rag_qa_system = (
     'As an advanced reading comprehension assistant, your task is to analyze text passages and corresponding questions meticulously. '
     'Your response start after "Thought: ", where you will methodically break down the reasoning process, illustrating how you arrive at conclusions. '
-    'Conclude with "Answer: " to present a concise, definitive response, devoid of additional elaborations.'
+    'Conclude with "Answer: " followed by the concise answer based solely on the given document—only the answer and no other words.'
 )
 
 one_shot_rag_qa_input = (

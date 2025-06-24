@@ -1,26 +1,23 @@
-import os
-from typing import List
 import json
-import argparse
-import logging
 import csv
+import argparse
 from src.hipporag import HippoRAG
 
-
-def main():
-
+def main(dataset_name: str):
     docs = []
-    with open("../../data/hotpotqa/corpus_sentence_6.jsonl", "r", encoding="utf-8") as f:
+    corpus_path = f"/ukp-storage-1/rolka1/thesis/data/{dataset_name}/corpus_sentence_256.jsonl"
+    
+    with open(corpus_path, "r", encoding="utf-8") as f:
         for line in f:
             obj = json.loads(line)
             docs.append(obj["contents"])
 
-    save_dir = 'outputs/demo_llama'
-    # Startup a HippoRAG instance
-    hipporag = HippoRAG(save_dir=save_dir,
-                        llm_model_name='Qwen/Qwen3-0.6B',
-                        embedding_model_name='sentence-transformers/all-MiniLM-L6-v2',
-                        llm_base_url="http://localhost:8000/v1")
+    hipporag = HippoRAG(
+        save_dir=f"/ukp-storage-1/rolka1/thesis/data/{dataset_name}/indexes/hipporag",
+        llm_model_name='/storage/ukp/shared/shared_model_weights/models--Qwen3-8B',
+        embedding_model_name='Qwen/Qwen3-Embedding-8B',
+        llm_base_url="http://localhost:8000/v1"
+    )
 
     # Run indexing
     hipporag.index(docs=docs)
@@ -28,7 +25,8 @@ def main():
     queries = []
     gold_answers = []
     gold_docs = []
-    with open("../../data/hotpotqa/train.jsonl", "r", encoding="utf-8") as f:
+    dev_path = f"/ukp-storage-1/rolka1/thesis/data/{dataset_name}/dev.jsonl"
+    with open(dev_path, "r", encoding="utf-8") as f:
         for line in f:
             obj = json.loads(line)
             queries.append(obj["question"])
@@ -44,7 +42,6 @@ def main():
         gold_answers=gold_answers
     )
 
-    # 2) collect our results
     results = []
     for idx, sol in enumerate(solutions):
         results.append({
@@ -63,4 +60,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset_name", type=str, default="hotpotqa")
+    args = parser.parse_args()
+    main(args.dataset_name)
