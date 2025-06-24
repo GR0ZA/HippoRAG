@@ -3,7 +3,7 @@ import csv
 import argparse
 from src.hipporag import HippoRAG
 
-def main(dataset_name: str):
+def run(dataset_name: str):
     docs = []
     corpus_path = f"/ukp-storage-1/rolka1/thesis/data/{dataset_name}/corpus_sentence_256.jsonl"
     
@@ -63,4 +63,4 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_name", type=str, default="hotpotqa")
     args = parser.parse_args()
-    main(args.dataset_name)
+    run(args.dataset_name)
