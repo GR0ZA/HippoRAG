@@ -1,6 +1,8 @@
+import datetime
 import json
 import csv
 import argparse
+import os
 from src.hipporag import HippoRAG
 
 def run(dataset_name: str):
@@ -21,7 +23,8 @@ def run(dataset_name: str):
 
     # Run indexing
     hipporag.index(docs=docs)
-
+    
+    ids = []
     queries = []
     gold_answers = []
     gold_docs = []
@@ -32,31 +35,48 @@ def run(dataset_name: str):
             queries.append(obj["question"])
             gold_answers.append(obj.get("golden_answers", []))
             # metadata.context.sentences is List[List[str]], one sub-list per supporting doc
-            ctx_lists = obj["metadata"]["context"]["sentences"]
+            # ctx_lists = obj["metadata"]["context"]["sentences"]
             # join each sub-list of sentences into one string
-            gold_docs.append([" ".join(sent_list) for sent_list in ctx_lists])
+            # gold_docs.append([" ".join(sent_list) for sent_list in ctx_lists])
 
-    solutions, response_messages, metadata, retrieval_metrics, qa_metrics = hipporag.rag_qa(
-        queries=queries,
-        gold_docs=gold_docs,
-        gold_answers=gold_answers
-    )
+    solutions = hipporag.rag_qa(queries=queries)
 
-    results = []
-    for idx, sol in enumerate(solutions):
-        results.append({
-            "id":               idx,
-            "question":         sol.question,
-            "gold_answer":      gold_answers[idx][0] if gold_answers[idx] else "",
-            "predicted_answer": sol.answer,
+    # build the intermediate JSON
+    timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
+    out_dir = f"/ukp-storage-1/rolka1/thesis/output/{dataset_name}_{timestamp}_hipporag2"
+    os.makedirs(out_dir, exist_ok=True)
+    intermediate = []
+    for i, sol in enumerate(solutions):
+        # original QA entry
+        qa = {
+            "id": ids[i],
+            "question": queries[i],
+            "golden_answers": gold_answers[i]
+        }
+        # parse sol.docs entries of form "Title\nContents"
+        retrieval_result = []
+        for d in sol.docs:
+            title, _, body = d.partition("\n")
+            retrieval_result.append({
+                "title":    title,
+                "contents": d
+            })
+
+        intermediate.append({
+            "id":              qa["id"],
+            "question":        qa["question"],
+            "golden_answers":  qa.get("golden_answers", []),
+            "output": {
+                "retrieval_result": retrieval_result,
+                "pred":             sol.answer
+            }
         })
 
-    out_csv = "results.csv"
-    print(f"Writing results to {out_csv}")
-    with open(out_csv, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["id", "question", "gold_answer", "predicted_answer"])
-        writer.writeheader()
-        writer.writerows(results)
+    intermediate_path = os.path.join(out_dir, "intermediate_data.json")
+    with open(intermediate_path, "w", encoding="utf-8") as f:
+        json.dump(intermediate, f, indent=4, ensure_ascii=True)
+
+    print(f"✅ Wrote intermediate data to {intermediate_path}")
 
 
 if __name__ == "__main__":
