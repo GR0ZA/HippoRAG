@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 import csv
 import argparse
@@ -27,19 +27,23 @@ def run(dataset_name: str):
     ids = []
     queries = []
     gold_answers = []
+    meta = []
     gold_docs = []
     dev_path = f"/ukp-storage-1/rolka1/thesis/data/{dataset_name}/dev.jsonl"
     with open(dev_path, "r", encoding="utf-8") as f:
         for line in f:
             obj = json.loads(line)
+            ids.append(obj["id"])
             queries.append(obj["question"])
+            meta.append(obj.get("metadata", {}))
             gold_answers.append(obj.get("golden_answers", []))
             # metadata.context.sentences is List[List[str]], one sub-list per supporting doc
-            # ctx_lists = obj["metadata"]["context"]["sentences"]
+            ctx_lists = obj["metadata"]["context"]["sentences"]
             # join each sub-list of sentences into one string
-            # gold_docs.append([" ".join(sent_list) for sent_list in ctx_lists])
+            gold_docs.append([" ".join(sent_list) for sent_list in ctx_lists])
 
-    solutions = hipporag.rag_qa(queries=queries)
+    solutions, _, _, _, _ = hipporag.rag_qa(
+        queries=queries, gold_docs=gold_docs, gold_answers=gold_answers)
 
     # build the intermediate JSON
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
@@ -51,11 +55,12 @@ def run(dataset_name: str):
         qa = {
             "id": ids[i],
             "question": queries[i],
+            "metadata": meta[i],
             "golden_answers": gold_answers[i]
         }
         # parse sol.docs entries of form "Title\nContents"
         retrieval_result = []
-        for d in sol.docs:
+        for d in sol.docs[:5]:
             title, _, body = d.partition("\n")
             retrieval_result.append({
                 "title":    title,
@@ -65,6 +70,7 @@ def run(dataset_name: str):
         intermediate.append({
             "id":              qa["id"],
             "question":        qa["question"],
+            "metadata":        qa.get("metadata", {}),
             "golden_answers":  qa.get("golden_answers", []),
             "output": {
                 "retrieval_result": retrieval_result,

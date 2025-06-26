@@ -64,8 +64,16 @@ class VLLMOffline:
         logger.info(f"Calling VLLM offline, # of messages {len(messages)}")
         messages_list = [messages]
         prompt_ids = convert_text_chat_messages_to_input_ids(messages_list, self.tokenizer)
+        
+        sampling_params = SamplingParams(
+            max_tokens=max_tokens,
+            temperature=0.7,
+            top_p=0.8,
+            top_k=20,
+            min_p=0,
+        )
 
-        vllm_output = self.client.generate(prompt_token_ids=prompt_ids,  sampling_params=SamplingParams(max_tokens=max_tokens, temperature=0))
+        vllm_output = self.client.generate(prompt_token_ids=prompt_ids,  sampling_params=sampling_params)
         response = vllm_output[0].outputs[0].text
         prompt_tokens = len(vllm_output[0].prompt_token_ids)
         completion_tokens = len(vllm_output[0].outputs[0].token_ids )
@@ -85,8 +93,17 @@ class VLLMOffline:
             guided = GuidedDecodingRequest(guided_json=PROMPT_JSON_TEMPLATE[json_template])
 
         all_prompt_ids = [convert_text_chat_messages_to_input_ids(messages, self.tokenizer) for messages in messages_list]
+        
+        sampling_params = SamplingParams(
+            max_tokens=max_tokens,
+            temperature=0.7,
+            top_p=0.8,
+            top_k=20,
+            min_p=0,
+        )
+        
         vllm_output = self.client.generate(prompt_token_ids=all_prompt_ids,
-                                           sampling_params=SamplingParams(max_tokens=max_tokens, temperature=0),
+                                           sampling_params=sampling_params,
                                            guided_options_request=guided)
 
         all_responses = [completion.outputs[0].text for completion in vllm_output]

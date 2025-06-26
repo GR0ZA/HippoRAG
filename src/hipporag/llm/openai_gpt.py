@@ -182,6 +182,16 @@ class CacheOpenAI(BaseLLM):
         if 'gpt' not in params['model'] or version.parse(openai.__version__) < version.parse("1.45.0"): # if we use vllm to call openai api or if we use openai but the version is too old to use 'max_completion_tokens' argument
             # TODO strange version change in openai protocol, but our current vllm version not changed yet
             params['max_tokens'] = params.pop('max_completion_tokens')
+            
+        params.update({
+            "temperature": 0.7,
+            "top_p":       0.8,
+            # anything vLLM‐only (or extra fields) lives under extra_body
+            "extra_body": {
+                "top_k": 20,
+                "min_p": 0
+            },
+        })
 
         response = self.openai_client.chat.completions.create(**params)
 
