@@ -16,7 +16,7 @@ def run(dataset_name: str):
 
     hipporag = HippoRAG(
         save_dir=f"/ukp-storage-1/rolka1/thesis/data/{dataset_name}/indexes/hipporag",
-        llm_model_name='/storage/ukp/shared/shared_model_weights/models--Qwen3-8B',
+        llm_model_name='/storage/ukp/shared/shared_model_weights/models--Qwen3-32B',
         embedding_model_name='Qwen/Qwen3-Embedding-8B',
         llm_base_url="http://localhost:8000/v1"
     )
@@ -38,12 +38,11 @@ def run(dataset_name: str):
             meta.append(obj.get("metadata", {}))
             gold_answers.append(obj.get("golden_answers", []))
             # metadata.context.sentences is List[List[str]], one sub-list per supporting doc
-            ctx_lists = obj["metadata"]["context"]["sentences"]
+            #ctx_lists = obj["metadata"]["context"]["sentences"]
             # join each sub-list of sentences into one string
-            gold_docs.append([" ".join(sent_list) for sent_list in ctx_lists])
+            #gold_docs.append([" ".join(sent_list) for sent_list in ctx_lists])
 
-    solutions, _, _, _, _ = hipporag.rag_qa(
-        queries=queries, gold_docs=gold_docs, gold_answers=gold_answers)
+    solutions, _, _ = hipporag.rag_qa(queries=queries)
 
     # build the intermediate JSON
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
